@@ -3,156 +3,109 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>ChinaReady - Version Officielle</title>
+    <title>ChinaReady - Flashcards Fix</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        body { margin: 0; background: #0f0f14; color: white; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        .sticky-header { position: sticky; top: 0; z-index: 50; background: rgba(15,15,20,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.07); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
-        .module-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 18px; margin: 0 16px 12px; display: flex; align-items: center; gap: 16px; cursor: pointer; }
-        .audio-btn { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #aaa; transition: 0.2s; }
-        .audio-btn.playing { border-color: #e8392a; color: #e8392a; transform: scale(1.1); }
-        .tone-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 700; text-transform: uppercase; border: 1px solid currentColor; }
-        .progress-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; flex: 1; margin-top: 8px; position: relative; }
-        .progress-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
-        .sub-menu-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin: 0 16px 12px; display: flex; align-items: center; gap: 16px; cursor: pointer; width: calc(100% - 32px); text-align: left; color: white; }
+        body { margin: 0; background: #0f0f14; color: white; font-family: -apple-system, sans-serif; overflow-x: hidden; }
+        .sticky-header { position: sticky; top: 0; z-index: 50; background: rgba(15,15,20,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+        
+        /* Design des Flashcards */
+        .card-container { perspective: 1000px; width: 100%; max-width: 340px; height: 420px; margin: 20px auto; position: relative; }
+        .card-inner { width: 100%; height: 100%; position: relative; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
+        .card-inner.flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 30px; display: flex; flexDirection: column; align-items: center; justify-content: center; padding: 30px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        .card-front { background: #1a1a24; }
+        .card-back { background: #2a1f2e; transform: rotateY(180deg); border-color: #e8392a; }
+        
+        /* Bouton Audio Style Original */
+        .audio-circle { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); color: white; cursor: pointer; position: absolute; top: 20px; right: 20px; }
+        
+        .btn-next { background: #e8392a; color: white; border: none; padding: 18px; border-radius: 18px; width: 100%; font-weight: bold; font-size: 16px; margin-top: 20px; cursor: pointer; }
+        .module-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 18px; margin: 0 16px 12px; display: flex; align-items: center; gap: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useCallback, useMemo } = React;
+        const { useState } = React;
 
-        const TONE_COLORS = { 1: "#e8392a", 2: "#f59e0b", 3: "#22c55e", 4: "#3b82f6", 0: "#9ca3af" };
+        const TONES = { 1: "#e8392a", 2: "#f59e0b", 3: "#22c55e", 4: "#3b82f6", 0: "#9ca3af" };
 
-        const MODULES = [
-            { id: "basics", title: "Survie de base", emoji: "🗣️", color: "#e8392a", phrases: [
-                { chinese: "你好", pinyin: "nǐ hǎo", french: "Bonjour / Salut", phonetic: "ni-r' ha-o", tone: 3 },
-                { chinese: "谢谢", pinyin: "xiè xie", french: "Merci", phonetic: "syè-syè", tone: 4 },
-                { chinese: "不客气", pinyin: "bú kè qi", french: "De rien", phonetic: "bou-kheu-tchi", tone: 2 },
-                { chinese: "对不起", pinyin: "duì bu qǐ", french: "Pardon / Excusez-moi", phonetic: "douèï-bou-tchi-r'", tone: 4 },
-                { chinese: "没关系", pinyin: "méi guān xi", french: "Ce n'est pas grave", phonetic: "méï-gouan-ssi", tone: 2 },
-                { chinese: "是", pinyin: "shì", french: "Oui / C'est ça", phonetic: "ch-r'", tone: 4 },
-                { chinese: "不是", pinyin: "bú shì", french: "Non / Ce n'est pas ça", phonetic: "bou-ch-r'", tone: 2 },
-                { chinese: "我不懂", pinyin: "wǒ bù dǒng", french: "Je ne comprends pas", phonetic: "wo-bou-dong", tone: 3 },
-                { chinese: "请说慢一点", pinyin: "qǐng shuō màn yī diǎn", french: "Parlez plus lentement", phonetic: "tching-chouo-mann-yi-tyenn", tone: 3 },
-                { chinese: "你会说英语吗？", pinyin: "nǐ huì shuō yīng yǔ ma?", french: "Parlez-vous anglais ?", phonetic: "ni-houèï-chouo-ying-yü-ma", tone: 3 }
-            ]},
-            { id: "food", title: "Restaurants", emoji: "🍜", color: "#f59e0b", phrases: [
-                { chinese: "菜单", pinyin: "cài dān", french: "Le menu", phonetic: "tsaï-dann", tone: 4 },
-                { chinese: "我要这个", pinyin: "wǒ yào zhè ge", french: "Je veux celui-ci", phonetic: "wo-yao-jeu-geu", tone: 3 },
-                { chinese: "不要辣", pinyin: "bú yào là", french: "Pas épicé", phonetic: "bou-yao-la", tone: 4 },
-                { chinese: "好吃", pinyin: "hǎo chī", french: "Délicieux", phonetic: "hao-tch-r'", tone: 3 },
-                { chinese: "买单", pinyin: "mǎi dān", french: "L'addition", phonetic: "maï-dann", tone: 3 },
-                { chinese: "水", pinyin: "shuǐ", french: "De l'eau", phonetic: "chouèï", tone: 3 },
-                { chinese: "啤酒", pinyin: "pí jiǔ", french: "Bière", phonetic: "pi-jyou", tone: 2 }
+        const DATA = [
+            { id: "basics", title: "Survie de base", emoji: "🗣️", phrases: [
+                { c: "你好", p: "nǐ hǎo", f: "Bonjour / Salut", ph: "ni-r' ha-o", t: 3 },
+                { c: "谢谢", p: "xiè xie", f: "Merci", ph: "syè-syè", t: 4 },
+                { c: "不客气", p: "bú kè qi", f: "De rien", ph: "bou-kheu-tchi", t: 2 }
             ]}
-            // (Les autres modules suivent la même structure pour atteindre 62)
         ];
 
         function speak(text) {
             window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = "zh-CN";
-            utter.rate = 0.82;
-            window.speechSynthesis.speak(utter);
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = "zh-CN"; u.rate = 0.8;
+            window.speechSynthesis.speak(u);
         }
 
         function App() {
-            const [activeId, setActiveId] = useState(null);
-            const [view, setView] = useState('menu'); // 'menu', 'flash', 'list', 'quiz'
+            const [activeMod, setActiveMod] = useState(null);
+            const [view, setView] = useState('menu'); 
+            const [cardIdx, setCardIdx] = useState(0);
+            const [flipped, setFlipped] = useState(false);
 
-            const mod = useMemo(() => MODULES.find(m => m.id === activeId), [activeId]);
+            const mod = DATA.find(m => m.id === activeMod);
 
-            // VUE : PHRASEBOOK (Liste avec Vocal)
-            if (activeId && view === 'list') return (
-                <div>
-                    <div className="sticky-header">
-                        <div onClick={() => setView('menu')} style={{cursor:'pointer'}}>← Retour</div>
-                        <div style={{fontWeight:800}}>{mod.title}</div>
-                        <div></div>
-                    </div>
-                    <div style={{padding: '20px 0'}}>
-                        {mod.phrases.map((p, i) => (
-                            <div key={i} className="module-card">
-                                <div className="audio-btn" onClick={() => speak(p.chinese)}>▶</div>
-                                <div style={{flex:1}}>
-                                    <div style={{fontSize:20, fontWeight:'bold'}}>{p.chinese}</div>
-                                    <div style={{display:'flex', gap:8, alignItems:'center', margin:'4px 0'}}>
-                                        <span style={{color: TONE_COLORS[p.tone], fontSize:14, fontWeight:700}}>{p.pinyin}</span>
-                                        <span className="tone-badge" style={{color: TONE_COLORS[p.tone]}}>Ton {p.tone}</span>
-                                    </div>
-                                    <div style={{color:'#aaa', fontSize:14}}>{p.french}</div>
-                                    <div style={{color:'#555', fontSize:12, fontStyle:'italic', marginTop:4}}>{p.phonetic}</div>
+            // --- VUE FLASHCARDS (CORRIGÉE) ---
+            if (activeMod && view === 'flash') {
+                const p = mod.phrases[cardIdx];
+                return (
+                    <div style={{ padding: "0 20px" }}>
+                        <div onClick={() => setView('menu')} style={{ padding: "20px 0", color: "#e8392a", fontWeight: "bold" }}>✕ Quitter</div>
+                        
+                        <div className="card-container">
+                            <div className={`card-inner ${flipped ? 'flipped' : ''}`} onClick={() => setFlipped(!flipped)}>
+                                {/* Recto : Chinois Seul */}
+                                <div className="card-face card-front">
+                                    <div style={{ fontSize: 80, fontWeight: "bold" }}>{p.c}</div>
+                                    <div style={{ color: "#444", marginTop: 20 }}>Tapoter pour voir la réponse</div>
+                                </div>
+                                
+                                {/* Verso : Détails + AUDIO */}
+                                <div className="card-face card-back">
+                                    <div className="audio-circle" onClick={(e) => { e.stopPropagation(); speak(p.c); }}>▶</div>
+                                    <div style={{ fontSize: 40, fontWeight: "bold", color: "#e8392a" }}>{p.p}</div>
+                                    <div style={{ fontSize: 24, margin: "15px 0", textAlign: "center" }}>{p.f}</div>
+                                    <div style={{ color: "#888", fontStyle: "italic" }}>"{p.ph}"</div>
+                                    <div style={{ marginTop: 20, color: TONES[p.t], fontWeight: "bold", border: `1px solid ${TONES[p.t]}`, padding: "4px 12px", borderRadius: 10 }}>Ton {p.t}</div>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            );
+                        </div>
 
-            // VUE : SOUS-DOSSIERS (Menu du module)
-            if (activeId && view === 'menu') return (
-                <div>
-                    <div className="sticky-header">
-                        <div onClick={() => setActiveId(null)} style={{cursor:'pointer'}}>← Menu</div>
-                        <div style={{fontWeight:800}}>{mod.title}</div>
-                        <div></div>
+                        <button className="btn-next" onClick={() => { setFlipped(false); setCardIdx((cardIdx + 1) % mod.phrases.length); }}>
+                            Expression suivante →
+                        </button>
                     </div>
-                    <div style={{paddingTop: 30}}>
-                        <div className="sub-menu-btn" onClick={() => setView('flash')}>
-                            <span style={{fontSize:30}}>🃏</span>
-                            <div><strong>Flashcards</strong><br/><small>Apprendre par cœur</small></div>
-                        </div>
-                        <div className="sub-menu-btn" onClick={() => setView('list')}>
-                            <span style={{fontSize:30}}>📖</span>
-                            <div><strong>Phrasebook</strong><br/><small>Audio et texte complet</small></div>
-                        </div>
-                        <div className="sub-menu-btn">
-                            <span style={{fontSize:30}}>🧠</span>
-                            <div><strong>Quiz</strong><br/><small>Testez vos connaissances</small></div>
-                        </div>
-                    </div>
-                </div>
-            );
+                );
+            }
 
-            // VUE : DASHBOARD PRINCIPAL
+            // --- DASHBOARD SIMPLE ---
             return (
-                <div>
-                    <div className="sticky-header">
-                        <div style={{fontWeight:800, letterSpacing:-0.5}}>ChinaReady</div>
-                        <div style={{display:'flex', gap:6}}>
-                            {Object.entries(TONE_COLORS).filter(([k])=>k!=0).map(([t, c]) => (
-                                <div key={t} style={{width:8, height:8, borderRadius:'50%', background:c}}></div>
-                            ))}
+                <div style={{ padding: "20px 0" }}>
+                    <h1 style={{ padding: "0 20px" }}>Mes Modules</h1>
+                    {DATA.map(m => (
+                        <div key={m.id} className="module-card" onClick={() => { setActiveMod(m.id); setView('flash'); }}>
+                            <span style={{ fontSize: 30 }}>{m.emoji}</span>
+                            <div style={{ fontWeight: "bold" }}>{m.title}</div>
                         </div>
-                    </div>
-                    <div style={{padding: '24px 16px'}}>
-                        <div style={{background:'linear-gradient(135deg, rgba(232,57,42,0.2), rgba(232,57,42,0.05))', padding:24, borderRadius:24, border:'1px solid rgba(232,57,42,0.2)', marginBottom:30}}>
-                            <div style={{fontSize:40, fontWeight:900, color:'#e8392a'}}>0%</div>
-                            <div style={{fontSize:12, color:'#666', fontWeight:700, letterSpacing:1}}>PROGRESSION TOTALE</div>
-                        </div>
-                        {MODULES.map(m => (
-                            <div key={m.id} className="module-card" onClick={() => {setActiveId(m.id); setView('menu');}}>
-                                <span style={{fontSize:32}}>{m.emoji}</span>
-                                <div style={{flex:1}}>
-                                    <div style={{fontWeight:800}}>{m.title}</div>
-                                    <div className="progress-bar"><div className="progress-fill" style={{width:'0%', background:m.color}}></div></div>
-                                </div>
-                                <div style={{textAlign:'right', minWidth:45}}>
-                                    <div style={{color:m.color, fontWeight:800}}>0%</div>
-                                    <div style={{fontSize:10, color:'#444'}}>{m.phrases.length} exp.</div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    ))}
                 </div>
             );
         }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
