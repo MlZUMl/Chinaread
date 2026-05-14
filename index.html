@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ChinaReady 🇨🇳</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d12;color:#f0f0f0;font-family:system-ui,-apple-system,sans-serif;min-height:100vh;display:flex;justify-content:center}
+#app{width:100%;max-width:480px;min-height:100vh;position:relative}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:99;background:rgba(13,13,18,.95);border-bottom:1px solid rgba(255,255,255,.08);padding:13px 16px;display:flex;align-items:center;justify-content:space-between}
+.topbar-title{font-size:16px;font-weight:800;display:flex;align-items:center;gap:9px}
+
+/* SCREENS */
+.screen{display:none;padding:18px 16px 70px}
+.screen.active{display:block}
+
+/* DASHBOARD */
+.dash-logo{font-size:27px;font-weight:900;letter-spacing:-1px}
+.dash-sub{font-size:13px;color:#444;margin-top:2px;margin-bottom:18px}
+.global-card{background:rgba(232,57,42,.08);border:1px solid rgba(232,57,42,.2);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:18px;margin-bottom:22px}
+.global-pct{font-size:36px;font-weight:900;color:#e8392a;text-align:center;min-width:58px}
+.global-lbl{font-size:9px;color:#444;text-transform:uppercase;letter-spacing:.8px;text-align:center}
+.pbar-wrap{height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden;margin-bottom:6px}
+.pbar-fill{height:100%;border-radius:4px;transition:width .5s}
+.global-count{font-size:12px;color:#777}
+.mod-list{display:flex;flex-direction:column;gap:10px}
+.mod-row{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 15px;cursor:pointer;display:flex;align-items:center;gap:12px;width:100%;font-family:inherit;text-align:left;transition:background .2s;border:1px solid rgba(255,255,255,.08)}
+.mod-row:active{background:rgba(255,255,255,.1)}
+.mod-emoji{font-size:24px;flex-shrink:0}
+.mod-info{flex:1}
+.mod-name{color:#f0f0f0;font-weight:700;font-size:15px;margin-bottom:6px}
+.mini-bar{height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.mini-fill{height:100%;border-radius:2px;transition:width .4s}
+.mod-stat{text-align:right;min-width:40px}
+.mod-pct{font-weight:700;font-size:14px}
+.mod-count{font-size:11px;color:#444}
+.tip{margin-top:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:11px;padding:12px 14px;font-size:12px;color:#555;line-height:1.6}
+
+/* MODULE HOME */
+.back-btn{background:none;border:none;color:#e8392a;font-size:20px;cursor:pointer;padding:0;margin-bottom:10px;font-family:inherit;display:block}
+.mod-hdr{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.mod-hdr-emoji{font-size:30px}
+.mod-hdr-title{font-size:20px;font-weight:800}
+.mod-hdr-sub{font-size:12px;color:#555}
+.prog-box{background:rgba(255,255,255,.05);border-radius:11px;padding:12px 14px;margin:12px 0 20px}
+.prog-box-top{display:flex;justify-content:space-between;margin-bottom:7px;font-size:13px}
+.prog-lbl{color:#777}
+.mode-list{display:flex;flex-direction:column;gap:11px}
+.mode-row{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px 17px;cursor:pointer;display:flex;align-items:center;gap:13px;width:100%;font-family:inherit;text-align:left;transition:background .2s}
+.mode-row:active{background:rgba(255,255,255,.1)}
+.mode-ico{font-size:24px}
+.mode-lbl{color:#f0f0f0;font-weight:700;font-size:15px}
+.mode-dsc{color:#555;font-size:12px;margin-top:2px}
+.mode-arr{margin-left:auto;color:#444;font-size:17px}
+
+/* SECTION HEADER */
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.sec-title{font-size:17px;font-weight:700}
+
+/* AUDIO BTN */
+.abtn{border-radius:50%;border:1.5px solid rgba(255,255,255,.17);background:rgba(255,255,255,.07);color:#aaa;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:all .2s;vertical-align:middle}
+.abtn:active,.abtn.playing{border-color:#e8392a;background:rgba(232,57,42,.18);color:#e8392a}
+.abtn-lg{width:44px;height:44px}
+.abtn-md{width:34px;height:34px}
+.abtn-sm{width:28px;height:28px}
+
+/* TONE BADGE */
+.tbadge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700;font-family:monospace;white-space:nowrap;display:inline-block}
+.tbadge-lg{font-size:13px;padding:3px 10px}
+
+/* PHRASEBOOK */
+.pb-search{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 14px;color:#f0f0f0;font-size:15px;outline:none;width:100%;margin-bottom:13px;font-family:inherit}
+.pb-search::placeholder{color:#444}
+.pb-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:12px 14px;display:flex;gap:11px;align-items:center;margin-bottom:9px}
+.pb-zh-wrap{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:55px}
+.pb-zh{font-size:28px;font-weight:700;line-height:1.1;text-align:center}
+.pb-info{flex:1}
+.pb-pinyin{font-weight:600;font-size:14px}
+.pb-phon{color:#666;font-size:12px;font-style:italic;margin-top:1px}
+.pb-fr{color:#ddd;font-size:13px;margin-top:3px}
+
+/* FLASHCARD */
+.fc-toprow{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.fc-counter{font-size:13px;color:#555}
+.fc-pbar-wrap{flex:1;margin:0 13px;height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.fc-pbar-fill{height:100%;background:#e8392a;border-radius:2px;transition:width .3s}
+.close-btn{background:none;border:none;color:#555;cursor:pointer;font-size:18px;font-family:inherit}
+.card-scene{width:100%;min-height:255px;perspective:1000px;cursor:pointer;margin-bottom:10px}
+.card-inner{position:relative;width:100%;min-height:255px;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+.card-inner.flipped{transform:rotateY(180deg)}
+.card-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px;gap:14px}
+.card-front{background:linear-gradient(135deg,#1a1a24,#22222e);border:1px solid rgba(255,255,255,.09)}
+.card-back{background:linear-gradient(135deg,#1e1a24,#2a1f2e);border:1px solid rgba(232,57,42,.24);transform:rotateY(180deg)}
+.card-zh-big{font-size:62px;font-weight:700;line-height:1;color:#f0f0f0}
+.card-hint{font-size:12px;color:#444}
+.card-zh-med{font-size:36px;font-weight:700;color:#f0f0f0}
+.card-pinyin{font-size:20px;font-weight:600}
+.card-phon{font-size:13px;color:#aaa;font-style:italic}
+.card-fr{font-size:17px;color:#f0f0f0}
+.card-badges{display:flex;align-items:center;gap:9px;margin-top:3px}
+.fc-hint{text-align:center;color:#444;font-size:12px;margin-top:8px}
+.fc-btns{display:flex;gap:12px;margin-top:14px}
+.fc-btn{flex:1;padding:13px;border-radius:12px;font-size:15px;cursor:pointer;font-weight:700;font-family:inherit}
+.fc-review{background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.36);color:#ef4444}
+.fc-known{background:rgba(34,197,94,.13);border:1px solid rgba(34,197,94,.36);color:#22c55e}
+
+/* RESULT SCREENS */
+.result-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;padding:26px 16px;text-align:center}
+.result-emoji{font-size:58px}
+.result-title{font-size:22px;font-weight:700}
+.result-scores{display:flex;gap:26px}
+.rscore-num{font-size:34px;font-weight:800}
+.rscore-lbl{font-size:12px;color:#555}
+.result-pctbox{background:rgba(255,255,255,.05);border-radius:11px;padding:10px 20px;font-size:13px;color:#777}
+.result-bigpct{font-size:50px;font-weight:900}
+.result-sub{font-size:13px;color:#555}
+.btn-row{display:flex;gap:10px}
+.btn-primary{background:#e8392a;color:#fff;border:none;border-radius:12px;padding:12px 26px;font-size:14px;cursor:pointer;font-weight:700;font-family:inherit}
+.btn-secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#f0f0f0;border-radius:12px;padding:12px 20px;font-size:14px;cursor:pointer;font-weight:600;font-family:inherit}
+
+/* QUIZ */
+.qz-card{background:linear-gradient(135deg,#1a1a24,#22222e);border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:26px;text-align:center;margin-bottom:16px}
+.qz-zh{font-size:58px;font-weight:700;line-height:1.1;color:#f0f0f0;margin-bottom:10px}
+.qz-pinyin{font-size:19px;font-weight:600;margin-bottom:14px}
+.qz-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.qz-opt{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:12px 10px;font-size:13px;cursor:pointer;font-weight:500;text-align:left;line-height:1.4;color:#ccc;font-family:inherit;transition:background .15s}
+.qz-opt:hover:not(:disabled){background:rgba(255,255,255,.09)}
+.qz-opt.correct{background:rgba(34,197,94,.15)!important;border-color:#22c55e!important;color:#22c55e!important}
+.qz-opt.wrong{background:rgba(239,68,68,.15)!important;border-color:#ef4444!important;color:#ef4444!important}
+.qz-next{background:#e8392a;border:none;color:#fff;border-radius:12px;padding:13px;font-size:15px;cursor:pointer;font-weight:700;width:100%;font-family:inherit}
+.qz-score{color:#22c55e;font-size:13px;font-weight:600}
+
+/* TONE LEGEND */
+.tone-btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#ccc;border-radius:8px;padding:5px 11px;font-size:12px;cursor:pointer;font-family:inherit}
+.tone-pop{position:absolute;top:50px;right:14px;background:#1a1a24;border:1px solid rgba(255,255,255,.14);border-radius:13px;padding:16px;z-index:200;width:245px;box-shadow:0 20px 40px rgba(0,0,0,.65);display:none}
+.tone-pop.open{display:block}
+.tone-pop-title{font-size:10px;color:#777;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:11px}
+.tone-row{display:flex;align-items:center;gap:9px;margin-bottom:8px;font-size:12px;color:#ccc}
+
+@media(max-width:400px){.card-zh-big{font-size:52px}.qz-zh{font-size:48px}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title"><span>🇨🇳</span><span id="topbar-text">ChinaReady</span></div>
+    <button class="tone-btn" id="tone-toggle-btn">🎵 Tons</button>
+  </div>
+
+  <!-- TONE LEGEND POPUP -->
+  <div class="tone-pop" id="tone-pop">
+    <div class="tone-pop-title">Les 4 tons du mandarin</div>
+    <div class="tone-row"><span class="tbadge" style="background:rgba(232,57,42,.15);color:#e8392a;border:1px solid rgba(232,57,42,.35)">ton 1</span>1er ton — plat et haut</div>
+    <div class="tone-row"><span class="tbadge" style="background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.35)">ton 2</span>2e ton — montant ↗</div>
+    <div class="tone-row"><span class="tbadge" style="background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35)">ton 3</span>3e ton — descend ↘ puis remonte</div>
+    <div class="tone-row"><span class="tbadge" style="background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.35)">ton 4</span>4e ton — descendant brusque ↘</div>
+    <div class="tone-row"><span class="tbadge" style="background:rgba(156,163,175,.15);color:#9ca3af;border:1px solid rgba(156,163,175,.35)">neutre</span>Ton neutre / atone</div>
+    <div style="font-size:11px;color:#444;margin-top:9px;line-height:1.5">Même mot + ton différent = sens différent !</div>
+  </div>
+
+  <!-- SCREEN: DASHBOARD -->
+  <div class="screen active" id="scr-dashboard">
+    <div class="dash-logo">学中文 <span style="font-size:14px;color:#444;font-weight:400">• Xué zhōngwén</span></div>
+    <div class="dash-sub">Chinois pour voyageurs — 2 semaines</div>
+    <div class="global-card">
+      <div><div class="global-pct" id="g-pct">0%</div><div class="global-lbl">Global</div></div>
+      <div style="flex:1">
+        <div class="pbar-wrap"><div class="pbar-fill" id="g-bar" style="width:0%;background:linear-gradient(90deg,#e8392a,#f59e0b)"></div></div>
+        <div class="global-count" id="g-count">0 / 0 expressions</div>
+      </div>
+    </div>
+    <div class="mod-list" id="mod-list"></div>
+    <div class="tip">🔊 <strong style="color:#777">Audio</strong> — Cliquez sur <strong style="color:#888">▶</strong> dans le <strong style="color:#888">Phrasebook</strong>, les <strong style="color:#888">Flashcards</strong> et le <strong style="color:#888">Quiz</strong> pour entendre la prononciation en mandarin.</div>
+  </div>
+
+  <!-- SCREEN: MODULE HOME -->
+  <div class="screen" id="scr-module">
+    <button class="back-btn" id="mod-back-btn">← Retour</button>
+    <div class="mod-hdr">
+      <span class="mod-hdr-emoji" id="mod-hdr-emoji"></span>
+      <div><div class="mod-hdr-title" id="mod-hdr-title"></div><div class="mod-hdr-sub" id="mod-hdr-sub"></div></div>
+    </div>
+    <div class="prog-box">
+      <div class="prog-box-top"><span class="prog-lbl">Progression</span><span id="mod-prog-pct" style="font-weight:700">0%</span></div>
+      <div class="pbar-wrap" style="height:5px"><div class="pbar-fill" id="mod-prog-bar" style="width:0%"></div></div>
+    </div>
+    <div class="mode-list">
+      <button class="mode-row" id="btn-fc"><span class="mode-ico">🃏</span><div><div class="mode-lbl">Flashcards</div><div class="mode-dsc">Mémoriser en retournant les cartes</div></div><span class="mode-arr">›</span></button>
+      <button class="mode-row" id="btn-quiz"><span class="mode-ico">🧠</span><div><div class="mode-lbl">Quiz</div><div class="mode-dsc">Tester ses connaissances en QCM</div></div><span class="mode-arr">›</span></button>
+      <button class="mode-row" id="btn-pb"><span class="mode-ico">📖</span><div><div class="mode-lbl">Phrasebook + Audio 🔊</div><div class="mode-dsc">Consulter et écouter toutes les expressions</div></div><span class="mode-arr">›</span></button>
+    </div>
+  </div>
+
+  <!-- SCREEN: PHRASEBOOK -->
+  <div class="screen" id="scr-pb">
+    <div class="sec-hdr">
+      <button class="back-btn" id="pb-back-btn" style="margin:0">←</button>
+      <span class="sec-title">Phrasebook 🔊</span>
+    </div>
+    <input class="pb-search" id="pb-search" placeholder="Chercher en français, pinyin…"/>
+    <div id="pb-list"></div>
+  </div>
+
+  <!-- SCREEN: FLASHCARD -->
+  <div class="screen" id="scr-fc">
+    <div class="fc-toprow">
+      <span class="fc-counter" id="fc-counter">1 / 10</span>
+      <div class="fc-pbar-wrap"><div class="fc-pbar-fill" id="fc-pbar" style="width:0%"></div></div>
+      <button class="close-btn" id="fc-close-btn">✕</button>
+    </div>
+    <div class="card-scene" id="card-scene">
+      <div class="card-inner" id="card-inner">
+        <div class="card-face card-front">
+          <div class="card-zh-big" id="fc-zh-front"></div>
+          <div id="fc-audio-front"></div>
+          <div class="card-hint">Tapez pour révéler</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-zh-med" id="fc-zh-back"></div>
+          <div class="card-pinyin" id="fc-pinyin"></div>
+          <div class="card-phon" id="fc-phon"></div>
+          <div class="card-fr" id="fc-fr"></div>
+          <div class="card-badges"><span id="fc-badge"></span><div id="fc-audio-back"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-hint" id="fc-hint">Tapez la carte pour voir la réponse</div>
+    <div class="fc-btns" id="fc-btns" style="display:none">
+      <button class="fc-btn fc-review" id="fc-btn-review">✗ À revoir</button>
+      <button class="fc-btn fc-known" id="fc-btn-known">✓ Je sais !</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: FLASHCARD RESULT -->
+  <div class="screen" id="scr-fc-result">
+    <div class="result-wrap">
+      <div class="result-emoji" id="fcr-emoji">🎉</div>
+      <div class="result-title">Session terminée !</div>
+      <div class="result-scores">
+        <div><div class="rscore-num" style="color:#22c55e" id="fcr-known">0</div><div class="rscore-lbl">Mémorisées</div></div>
+        <div><div class="rscore-num" style="color:#ef4444" id="fcr-review">0</div><div class="rscore-lbl">À revoir</div></div>
+      </div>
+      <div class="result-pctbox">Score : <span id="fcr-pct" style="font-weight:700">0%</span></div>
+      <button class="btn-primary" id="fcr-back-btn">Retour au module</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: QUIZ -->
+  <div class="screen" id="scr-quiz">
+    <div class="fc-toprow">
+      <span class="fc-counter" id="qz-counter">1 / 10</span>
+      <span class="qz-score" id="qz-score">✓ 0</span>
+      <button class="close-btn" id="qz-close-btn">✕</button>
+    </div>
+    <div class="qz-card">
+      <div class="qz-zh" id="qz-zh"></div>
+      <div class="qz-pinyin" id="qz-pinyin"></div>
+      <div id="qz-audio" style="display:flex;justify-content:center"></div>
+    </div>
+    <div class="qz-opts" id="qz-opts"></div>
+    <button class="qz-next" id="qz-next-btn" style="display:none">Question suivante →</button>
+  </div>
+
+  <!-- SCREEN: QUIZ RESULT -->
+  <div class="screen" id="scr-quiz-result">
+    <div class="result-wrap">
+      <div class="result-emoji" id="qzr-emoji">🏆</div>
+      <div class="result-title">Quiz terminé !</div>
+      <div class="result-bigpct" id="qzr-pct">0%</div>
+      <div class="result-sub" id="qzr-sub"></div>
+      <div class="btn-row">
+        <button class="btn-secondary" id="qzr-replay-btn">Rejouer</button>
+        <button class="btn-primary" id="qzr-back-btn">Retour</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end #app -->
+
+<script>
+(function() {
+"use strict";
+
+// ── DONNÉES ───────────────────────────────────────────────────────────────────
+
+var TONE_COLORS = {1:"#e8392a",2:"#f59e0b",3:"#22c55e",4:"#3b82f6",0:"#9ca3af"};
+
+var DATA = [
+  {id:"basics",emoji:"🗣️",title:"Survie de base",color:"#e8392a",phrases:[
+    {zh:"你好",py:"nǐ hǎo",fr:"Bonjour / Salut",ph:"ni-r' ha-o",t:3},
+    {zh:"谢谢",py:"xiè xie",fr:"Merci",ph:"syè-syè",t:4},
+    {zh:"不客气",py:"bú kè qi",fr:"De rien",ph:"bou-kheu-tchi",t:2},
+    {zh:"对不起",py:"duì bu qǐ",fr:"Pardon / Excusez-moi",ph:"douèï-bou-tchi-r'",t:4},
+    {zh:"没关系",py:"méi guān xi",fr:"Ce n'est pas grave",ph:"méï-gouan-ssi",t:2},
+    {zh:"是",py:"shì",fr:"Oui / C'est ça",ph:"ch-r'",t:4},
+    {zh:"不是",py:"bú shì",fr:"Non / Ce n'est pas ça",ph:"bou-ch-r'",t:2},
+    {zh:"我不懂",py:"wǒ bù dǒng",fr:"Je ne comprends pas",ph:"wo-bou-dong",t:3},
+    {zh:"请说慢一点",py:"qǐng shuō màn yī diǎn",fr:"Parlez plus lentement",ph:"tching-chouo-mann-yi-tyenn",t:3},
+    {zh:"你会说英语吗？",py:"nǐ huì shuō yīng yǔ ma?",fr:"Parlez-vous anglais ?",ph:"ni-houèï-chouo-ying-yü-ma",t:3}
+  ]},
+  {id:"food",emoji:"🍜",title:"Restaurants",color:"#f59e0b",phrases:[
+    {zh:"菜单",py:"cài dān",fr:"Le menu / La carte",ph:"tsaï-dann",t:4},
+    {zh:"我要这个",py:"wǒ yào zhè ge",fr:"Je veux celui-ci",ph:"wo-yao-jeu-geu",t:3},
+    {zh:"好吃！",py:"hǎo chī!",fr:"C'est délicieux !",ph:"hao-tch-r'",t:3},
+    {zh:"我对…过敏",py:"wǒ duì … guò mǐn",fr:"Je suis allergique à…",ph:"wo-douèï-[...]gouo-minn",t:3},
+    {zh:"不要辣",py:"bú yào là",fr:"Pas épicé",ph:"bou-yao-la",t:4},
+    {zh:"素食",py:"sù shí",fr:"Végétarien",ph:"sou-ch-r'",t:4},
+    {zh:"买单",py:"mǎi dān",fr:"L'addition s'il vous plaît",ph:"maï-dann",t:3},
+    {zh:"可以刷卡吗？",py:"kě yǐ shuā kǎ ma?",fr:"Acceptez-vous les cartes ?",ph:"kheu-yi-choua-ka-ma",t:3},
+    {zh:"水",py:"shuǐ",fr:"De l'eau",ph:"chouèï",t:3},
+    {zh:"啤酒",py:"pí jiǔ",fr:"De la bière",ph:"pi-jyou",t:2}
+  ]},
+  {id:"transport",emoji:"🚇",title:"Transports",color:"#6366f1",phrases:[
+    {zh:"出租车",py:"chū zū chē",fr:"Taxi",ph:"tchou-tsou-tcheu",t:1},
+    {zh:"地铁",py:"dì tiě",fr:"Métro",ph:"ti-tyè",t:4},
+    {zh:"请带我去…",py:"qǐng dài wǒ qù …",fr:"Emmenez-moi à…",ph:"tching-daï-wo-tchü-[...]",t:3},
+    {zh:"机场",py:"jī chǎng",fr:"Aéroport",ph:"ji-tchang",t:1},
+    {zh:"火车站",py:"huǒ chē zhàn",fr:"Gare ferroviaire",ph:"houo-tcheu-jann",t:3},
+    {zh:"停在这里",py:"tíng zài zhè lǐ",fr:"Arrêtez-vous ici",ph:"ting-zaï-jeu-li",t:2},
+    {zh:"多少钱？",py:"duō shao qián?",fr:"Combien ça coûte ?",ph:"douo-chao-tchienn",t:1},
+    {zh:"左",py:"zuǒ",fr:"À gauche",ph:"tsou-or'",t:3},
+   
